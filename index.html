@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA.AI - Context Aware Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* =========================================
+           1. CORE VARIABLES & CINEMATIC CONFIG
+           ========================================= */
+        :root {
+            /* Palette */
+            --primary: #966AD2;
+            --primary-glow: rgba(150, 106, 210, 0.5);
+            --secondary: #4157A7;
+            --accent: #CBEDF7;
+            --blue-accent: rgb(61, 106, 255);
+            --bg-body: #020205;
+            --bg-sidebar: #05050A;
+            --bg-chat-cinematic: #0a0a12;
+            --text-main: #FFFFFF;
+            --text-muted: #A0A0B0;
+            
+            /* ADDED: Missing Glow Variables */
+            --lavender-glow: rgba(150, 106, 210, 0.6);
+            --white-glow: rgba(255, 255, 255, 0.7);
+
+            /* Glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+            --backdrop-blur: blur(25px);
+            
+            /* Dimensions */
+            --sidebar-width: 280px;
+            --header-height: 90px;
+            
+            /* Animation Config */
+            --anim-speed: 1; 
+            --ease-cinematic: cubic-bezier(0.19, 1, 0.22, 1);
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Accessibility: Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            :root { --anim-speed: 0.1; }
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%; height: 100%;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            overflow: hidden; 
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(65, 87, 167, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(150, 106, 210, 0.15) 0%, transparent 50%);
+        }
+
+        /* Prevent background shifting */
+        body, .main-content, .page-section, .chat-section {
+            transform: none !important;
+            perspective: none !important;
+        }
+
+        h1, h2, h3, h4, h5 { font-family: 'Nunito', sans-serif; font-weight: 800; letter-spacing: -0.01em; }
+        button { cursor: pointer; border: none; font-family: inherit; outline: none; transition: all 0.3s var(--ease-cinematic); }
+        a { text-decoration: none; color: inherit; transition: 0.3s var(--ease-cinematic); cursor: pointer; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(150, 106, 210, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(150, 106, 210, 0.6); }
+
+        body { display: flex; height: 100vh; }
+
+        /* =========================================
+           2. SIDEBAR
+           ========================================= */
+        .sidebar {
+            width: var(--sidebar-width); background-color: var(--bg-sidebar);
+            display: flex; flex-direction: column; padding: 1.5rem;
+            flex-shrink: 0; border-right: var(--glass-border);
+            position: relative; z-index: 100;
+            transition: transform 0.4s var(--ease-cinematic);
+        }
+        .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+        .logo-text { font-size: 1.4rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .new-chat-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), rgba(150, 106, 210, 0.8)); color: white; font-size: 1.1rem; box-shadow: 0 0 20px var(--primary-glow); }
+        .new-chat-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(150, 106, 210, 0.8); }
+
+        .history-container { flex: 1; overflow-y: auto; margin: 1rem 0; padding-right: 5px; }
+        .history-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; padding: 10px 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
+        .history-item { 
+            display: flex; align-items: center; gap: 12px; padding: 12px; 
+            border-radius: 10px; color: var(--text-main); font-size: 0.9rem; 
+            cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            transition: all 0.2s var(--ease-cinematic); margin-bottom: 4px; border: 1px solid transparent; 
+            opacity: 0; animation: slideInItem calc(0.5s * var(--anim-speed)) var(--ease-cinematic) forwards;
+        }
+        @keyframes slideInItem { to { opacity: 1; transform: translateX(0); } }
+        .history-item:hover { background: rgba(255, 255, 255, 0.05); color: #fff; border-color: rgba(255, 255, 255, 0.1); transform: translateX(4px); }
+        .history-item.active { background: rgba(150, 106, 210, 0.15); border-color: var(--primary); box-shadow: 0 0 15px rgba(150, 106, 210, 0.1); color: #fff; }
+
+        .sidebar-footer { border-top: var(--glass-border); padding-top: 2rem; display: flex; flex-direction: column; gap: 10px; position: relative; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.05); color: #fff; transform: translateX(4px); }
+
+        .user-profile { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.02); border: var(--glass-border); cursor: pointer; transition: 0.3s; }
+        .user-profile:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--primary); }
+        .avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 10px; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; color: #fff; }
+        
+        .user-dropdown { position: absolute; bottom: 120%; left: 0; width: 100%; background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 6px; display: none; flex-direction: column; gap: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); animation: fadeUp 0.3s var(--ease-cinematic); z-index: 200; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .dropdown-item { padding: 10px 12px; border-radius: 8px; color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; }
+        .dropdown-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .dropdown-item.logout { color: #ff6b6b; } .dropdown-item.logout:hover { background: rgba(255, 75, 75, 0.1); }
+
+        /* =========================================
+           3. MAIN LAYOUT
+           ========================================= */
+        .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; overflow: hidden; }
+        
+        .sticky-header { 
+            height: var(--header-height); display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 3rem; background: rgba(2, 2, 5, 0.7); backdrop-filter: blur(15px); 
+            z-index: 9999; border-bottom: var(--glass-border); flex-shrink: 0; position: relative; 
+        }
+        
+        .logo-title { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; transition: 0.3s; }
+        .logo-title:hover { opacity: 0.9; transform: scale(1.02); }
+        .nav-center { display: flex; gap: 2.5rem; align-items: center; }
+        .nav-link { color: var(--text-muted); font-weight: 600; font-size: 0.95rem; transition: 0.3s; position: relative; padding-bottom: 4px; }
+        .nav-link:hover, .nav-link.active { color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        .login-btn { padding: 10px 24px; border-radius: 30px; border: 1px solid rgba(61, 106, 255, 0.5); font-size: 0.9rem; text-transform: uppercase; font-weight: 700; background: rgba(61, 106, 255, 0.1); color: #fff; transition: 0.3s; }
+        .login-btn:hover { background: var(--blue-accent); box-shadow: 0 0 30px rgba(61, 106, 255, 0.4); border-color: transparent; }
+
+        /* NOTIFICATIONS */
+        .notif-bell { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); color: #fff; font-size: 1.1rem; cursor: pointer; transition: 0.3s; margin-right: 15px; }
+        .notif-bell:hover { background: rgba(255,255,255,0.1); color: var(--accent); box-shadow: 0 0 15px rgba(203, 237, 247, 0.3); }
+        .notif-dot { position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; background: #ff4b4b; border-radius: 50%; box-shadow: 0 0 8px #ff4b4b; display: none; }
+        .notif-dot.active { display: block; }
+
+        .notif-panel {
+            position: fixed; top: 80px; right: 30px; width: 360px; max-height: 80vh;
+            background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6); z-index: 999999;
+            display: none; flex-direction: column; overflow: hidden;
+            animation: slideDownFade 0.4s var(--ease-cinematic);
+        }
+        .notif-panel[style*="display: flex"] { display: flex !important; }
+        @keyframes slideDownFade { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .notif-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+        .notif-title { font-weight: 800; font-size: 0.95rem; color: #fff; }
+        .notif-read-btn { font-size: 0.75rem; color: var(--primary); cursor: pointer; font-weight: 600; }
+        .notif-list { overflow-y: auto; }
+        .notif-item { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 15px; cursor: pointer; transition: 0.2s; position: relative; }
+        .notif-item:hover { background: rgba(255,255,255,0.04); }
+        .notif-item.unread::after { content: ''; position: absolute; top: 18px; right: 20px; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 8px var(--primary); }
+        .notif-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.05); display: grid; place-items: center; color: var(--accent); flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05); }
+        .notif-content h4 { font-size: 0.9rem; margin-bottom: 4px; color: #fff; font-weight: 600; }
+        .notif-content p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+        .notif-time { font-size: 0.7rem; color: #555; margin-top: 6px; }
+
+        .page-section { flex: 1; overflow-y: auto; scroll-behavior: smooth; position: relative; height: calc(100vh - var(--header-height)); padding-bottom: 2rem; }
+        .landing-container { padding: 6rem 4rem; max-width: 1400px; margin: 0 auto; display: block; opacity: 0; animation: pageEntrance calc(1.2s * var(--anim-speed)) var(--ease-cinematic) forwards; transform: translateY(20px); }
+        @keyframes pageEntrance { to { opacity: 1; transform: translateY(0); } }
+
+        /* =========================================
+           4. VISUAL SECTIONS
+           ========================================= */
+        .hero { display: flex; align-items: center; justify-content: space-between; gap: 4rem; margin-bottom: 8rem; flex-wrap: wrap; }
+        .hero-content { flex: 1 1 500px; max-width: 650px; }
+        .hero h1 { font-size: clamp(3rem, 5vw, 5rem); line-height: 1.1; margin-bottom: 1.5rem; background: linear-gradient(135deg, #fff 0%, #fff 40%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
+        .hero p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2.5rem; line-height: 1.6; max-width: 90%; }
+        .hero-btns { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+        .btn-primary { background: #fff; color: #000; padding: 16px 36px; border-radius: 30px; font-weight: 800; font-size: 1rem; box-shadow: 0 0 30px rgba(255, 255, 255, 0.2); transition: 0.3s var(--ease-bounce); }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 0 50px rgba(255, 255, 255, 0.5); }
+        .btn-glass { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 16px 36px; border-radius: 30px; font-weight: 700; font-size: 1rem; backdrop-filter: blur(10px); transition: 0.3s var(--ease-bounce); }
+        .btn-glass:hover { background: rgba(255, 255, 255, 0.1); border-color: #fff; transform: translateY(-3px); box-shadow: 0 0 30px rgba(255, 255, 255, 0.1); }
+
+        /* ROBOT 3D Styles */
+        .hero-visual { perspective: 1200px; display: flex; justify-content: center; align-items: center; flex: 1 1 400px; min-height: 450px; }
+        .robot-wrapper { position: relative; width: 300px; height: 450px; display: flex; flex-direction: column; align-items: center; animation: floatRobot 6s ease-in-out infinite; transform-style: preserve-3d; }
+        @keyframes floatRobot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .head-group { position: relative; width: 160px; height: 160px; z-index: 10; transform-style: preserve-3d; transition: transform 0.1s ease-out; }
+        .robo-head-box { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
+        .face { position: absolute; width: 160px; height: 160px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(230, 230, 250, 0.1) 100%); border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 0 0 40px var(--lavender-glow); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; border-radius: 45px; }
+        .front { transform: translateZ(80px); } .back { transform: rotateY(180deg) translateZ(80px); } .right { transform: rotateY(90deg) translateZ(80px); } .left { transform: rotateY(-90deg) translateZ(80px); } .top { transform: rotateX(90deg) translateZ(80px); background: rgba(255, 255, 255, 0.25); } .bottom { transform: rotateX(-90deg) translateZ(80px); }
+        .eye-container { display: flex; gap: 30px; align-items: center; }
+        .box-eye { width: 35px; height: 35px; background: #000; border-radius: 10px; box-shadow: 0 0 15px var(--accent); border: 2px solid var(--accent); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .box-eye::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 0%; background: #000; z-index: 10; animation: blinkEyes calc(6s * var(--anim-speed)) infinite; }
+        @keyframes blinkEyes { 0%, 48%, 52%, 100% { height: 0%; } 50% { height: 100%; } }
+        .box-pupil { width: 12px; height: 12px; background: #fff; border-radius: 3px; box-shadow: 0 0 8px #fff; position: absolute; }
+        .body-group { position: relative; margin-top: -10px; z-index: 5; display: flex; flex-direction: column; align-items: center; }
+        .robo-neck { width: 60px; height: 20px; background: rgba(255, 255, 255, 0.6); margin-top: -10px; }
+        .robo-torso { width: 180px; height: 220px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 30px; backdrop-filter: blur(10px); box-shadow: 0 0 30px var(--white-glow); display: flex; justify-content: center; align-items: center; position: relative; }
+        .robo-core { width: 60px; height: 60px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 40px var(--accent), 0 0 80px var(--primary); animation: pulseCore 3s infinite; }
+        @keyframes pulseCore { 0%, 100% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.08); opacity: 1; } }
+        .robo-shoulder { width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 50%; position: absolute; top: 30px; }
+        .left-shoulder { left: -30px; } .right-shoulder { right: -30px; }
+        .robo-arm { width: 40px; height: 160px; border: 2px solid rgba(255, 255, 255, 0.4); border-radius: 20px; position: absolute; top: 70px; }
+        .left-arm { left: -35px; transform: rotate(10deg); } .right-arm { right: -35px; transform: rotate(-10deg); }
+
+        .features-section { margin-top: 5rem; }
+        .section-title { font-size: 2.5rem; text-align: center; margin-bottom: 4rem; background: linear-gradient(135deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 6rem; }
+        .feature-card { background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 2rem; backdrop-filter: blur(10px); transition: all 0.4s var(--ease-cinematic); cursor: pointer; min-height: 240px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; position: relative; overflow: hidden; transform-style: preserve-3d; }
+        .feature-card:hover { transform: translateY(-8px) rotateX(2deg); border-color: var(--primary); box-shadow: 0 15px 40px rgba(150, 106, 210, 0.15); }
+        .feature-icon { font-size: 2rem; margin-bottom: 1.2rem; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .feature-title { font-size: 1.2rem; margin-bottom: 0.6rem; color: #fff; font-weight: 700; }
+        .feature-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+
+        .pricing-section { margin-top: 4rem; margin-bottom: 4rem; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .pricing-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 2.5rem 2rem; text-align: center; position: relative; overflow: hidden; transition: 0.4s var(--ease-cinematic); display: flex; flex-direction: column; transform-style: preserve-3d; }
+        .pricing-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 0 40px rgba(150, 106, 210, 0.15); }
+        .pricing-card.basic { border-top: 4px solid #A0A0B0; }
+        .pricing-card.premium { border-top: 4px solid var(--primary); background: linear-gradient(180deg, rgba(150, 106, 210, 0.05), transparent); }
+        .pricing-card.premium::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent); transform: rotate(45deg) translateY(-100%); animation: shimmerCard 6s infinite linear; }
+        @keyframes shimmerCard { 0% { transform: rotate(45deg) translateY(-100%); } 100% { transform: rotate(45deg) translateY(100%); } }
+        .pricing-card.ultimate { border-top: 4px solid var(--accent); background: linear-gradient(180deg, rgba(203, 237, 247, 0.05), transparent); border-color: rgba(203, 237, 247, 0.2); }
+        .price-title { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        .price-amount { font-size: 3rem; font-weight: 900; margin-bottom: 2rem; color: #fff; display: flex; align-items: flex-start; justify-content: center; }
+        .price-amount span { font-size: 1rem; margin-top: 10px; margin-left: 5px; color: var(--text-muted); font-weight: 400; }
+        .price-btn { width: 100%; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.3s; border: none; }
+        .premium .price-btn { background: var(--primary); color: #fff; box-shadow: 0 0 15px var(--primary-glow); }
+
+        .team-section { margin-top: 6rem; padding: 3rem; background: linear-gradient(135deg, rgba(65, 87, 167, 0.1), rgba(150, 106, 210, 0.1)); border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+        .team-member { background: var(--bg-sidebar); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 2rem; text-align: center; transition: all 0.4s; cursor: pointer; }
+        .team-member:hover { border-color: var(--primary); box-shadow: 0 0 25px var(--primary-glow); transform: translateY(-5px); }
+        .member-avatar { width: 70px; height: 70px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; margin: 0 auto 1rem; display: grid; place-items: center; font-size: 1.8rem; box-shadow: 0 0 20px var(--primary-glow); }
+        .member-name { font-size: 1.1rem; margin-bottom: 0.3rem; color: #fff; font-weight: 700; }
+        .member-role { color: var(--accent); font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 600; }
+        .member-bio { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
+
+        /* =========================================
+           5. CHAT INTERFACE
+           ========================================= */
+        .chat-section { 
+            display: none; flex-direction: column; height: 100%; width: 100%; 
+            background: var(--bg-chat-cinematic); position: relative; overflow: hidden; 
+            z-index: 10; 
+        }
+        .chat-section.active { display: flex; }
+        
+        .cinematic-bg { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at center, rgba(255, 255, 255, 0.015) 0%, transparent 60%); animation: cinematicRotate 30s linear infinite; pointer-events: none; z-index: 0; }
+        @keyframes cinematicRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .chat-toolbar { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 1.2rem 2rem; background: rgba(10, 10, 15, 0.9); 
+            border-bottom: var(--glass-border); z-index: 20; backdrop-filter: blur(15px); 
+            flex-wrap: wrap; gap: 15px; 
+        }
+        
+        /* Dropdowns */
+        .custom-dropdown { position: relative; min-width: 140px; z-index: 50; }
+        .dropdown-selected { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 30px; color: white; font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s; white-space: nowrap; }
+        .dropdown-selected:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--primary); }
+        .dropdown-options { position: absolute; top: 120%; left: 0; width: 100%; min-width: 160px; background: rgba(15, 15, 25, 0.95); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 14px; padding: 6px; display: none; flex-direction: column; gap: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); backdrop-filter: blur(20px); animation: fadeUp 0.2s ease-out; z-index: 100; }
+        .custom-dropdown.active .dropdown-options { display: flex; }
+        .dropdown-option { padding: 10px 12px; border-radius: 8px; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .dropdown-option:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateX(3px); }
+        .dropdown-option.active { color: var(--primary); background: rgba(150, 106, 210, 0.1); }
+
+        .chat-messages { flex: 1; overflow-y: auto; padding: 2rem 5%; display: flex; flex-direction: column; gap: 2rem; z-index: 5; scroll-behavior: smooth; }
+        .message-row { display: flex; width: 100%; animation: fadeIn 0.3s ease-out; position: relative; }
+        .message-row.user { justify-content: flex-end; }
+        .message-row.ai { justify-content: flex-start; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .message-bubble { max-width: 80%; padding: 1.2rem 1.6rem; border-radius: 20px; font-size: 1rem; line-height: 1.6; box-shadow: 0 5px 20px rgba(0,0,0,0.1); position: relative; transition: 0.3s; }
+        .message-bubble.user { background: linear-gradient(135deg, var(--secondary), var(--blue-accent)); color: white; border-bottom-right-radius: 4px; }
+        .message-bubble.ai { background: rgba(35, 35, 45, 0.9); border: 1px solid rgba(255,255,255,0.08); color: #e0e0e0; border-bottom-left-radius: 4px; }
+        
+        /* Message Actions */
+        .msg-wrapper { position: relative; max-width: 100%; display: flex; flex-direction: column; }
+        .message-row.user .msg-wrapper { align-items: flex-end; }
+        .msg-actions { position: absolute; top: -30px; right: 0; background: rgba(15, 15, 25, 0.95); border: 1px solid var(--primary); border-radius: 20px; padding: 4px 8px; display: none; gap: 6px; box-shadow: 0 5px 15px rgba(150, 106, 210, 0.2); backdrop-filter: blur(10px); animation: slideUpFade 0.2s ease; z-index: 10; }
+        .message-row.ai .msg-actions { left: 0; right: auto; }
+        .msg-wrapper:hover .msg-actions { display: flex; }
+        .action-btn { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.8rem; transition: 0.2s; padding: 4px; }
+        .action-btn:hover { color: #fff; transform: scale(1.1); }
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Typing & Voice */
+        .typing-bubble { display: inline-flex; gap: 4px; padding: 12px 18px; background: rgba(30, 30, 40, 0.8); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); align-self: flex-start; margin-bottom: 10px; animation: fadeInBubble 0.3s ease-out; }
+        .typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: typingBounce 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: 0s; } .typing-dot:nth-child(2) { animation-delay: 0.2s; } .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+        @keyframes fadeInBubble { from { opacity: 0; transform: translateY(5px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        .typewriter-cursor::after { content: '|'; display: inline-block; animation: blinkCursor 0.8s infinite; color: var(--accent); margin-left: 2px; }
+        @keyframes blinkCursor { 50% { opacity: 0; } }
+        .voice-playing { box-shadow: 0 0 20px var(--primary-glow), 0 0 40px var(--accent) !important; transform: scale(1.02); border-color: var(--accent) !important; transition: all 0.5s ease; }
+        
+        .chat-input-area { padding: 1.5rem 2rem 2rem; background: linear-gradient(to top, #000 10%, transparent); z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .input-wrapper { width: 100%; max-width: 900px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 8px 12px; display: flex; align-items: center; box-shadow: 0 10px 40px rgba(0,0,0,0.4); transition: all 0.3s ease; }
+        .input-wrapper:focus-within { border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 25px rgba(150, 106, 210, 0.15); }
+        .chat-input { flex: 1; background: transparent; border: none; color: white; font-size: 1rem; padding: 5px; outline: none; }
+        .send-btn { background: var(--primary); color: white; width: 45px; height: 45px; border-radius: 12px; font-size: 1.1rem; display: grid; place-items: center; margin-left: 10px; box-shadow: 0 0 15px var(--primary-glow); transition: 0.2s; }
+        .send-btn:hover { transform: scale(1.05) rotate(-5deg); box-shadow: 0 0 25px var(--primary-glow); }
+
+        /* =========================================
+           6. MODALS & PROJECTS
+           ========================================= */
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px); 
+            justify-content: center; align-items: center; 
+            z-index: 1000000 !important; /* Highest priority */
+        }
+        
+        .modal-container { 
+            max-width: 450px; width: 90%; max-height: 90vh;
+            background: linear-gradient(135deg, #151520 0%, #0a0a10 100%); 
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px; 
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8); position: relative; 
+            animation: slideUp 0.3s cubic-bezier(0.19, 1, 0.22, 1); 
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        
+        .modal-header { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-shrink: 0; }
+        .modal-close { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #aaa; font-size: 16px; transition: 0.3s; }
+        .modal-close:hover { background: #ff4b4b; color: #fff; }
+
+        /* Full Size Modals (Project/Workspace) */
+        .fs-modal-container { max-width: 900px; width: 95%; height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+        .fs-modal-body, .settings-body, .ws-content { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; padding-right: 5px; }
+        
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 15px; margin-top: 20px; }
+        .project-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; gap: 10px; }
+        .project-card:hover { border-color: var(--primary); box-shadow: 0 5px 20px rgba(150, 106, 210, 0.1); transform: translateY(-3px); }
+        .pj-title { font-weight: 700; color: #fff; font-size: 1rem; }
+        .pj-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; flex: 1; }
+        .pj-progress { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 5px 0; }
+        .pj-bar { height: 100%; background: var(--primary); width: 0%; transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); }
+        .pj-actions { display: flex; gap: 8px; }
+        .pj-btn { flex: 1; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: none; color: #ccc; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .pj-btn:hover { background: var(--primary); color: #fff; }
+        .pj-btn.del:hover { background: #ff4b4b; }
+        .add-project-btn { width: 100%; padding: 15px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 16px; background: transparent; color: var(--text-muted); cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; }
+        .add-project-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(150,106,210,0.05); }
+
+        /* Workspace */
+        .ws-layout { display: flex; height: 100%; gap: 20px; overflow: hidden; }
+        .ws-sidebar { width: 200px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .ws-tab { padding: 10px 12px; border-radius: 10px; color: var(--text-muted); cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+        .ws-tab:hover, .ws-tab.active { background: rgba(150,106,210,0.15); color: #fff; }
+        .ws-tab.active { border-left: 3px solid var(--primary); }
+        .ws-section { display: none; animation: fadeIn 0.3s; }
+        .ws-section.active { display: block; }
+        .note-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px; }
+        .note-card textarea { width: 100%; background: transparent; border: none; color: #fff; font-family: inherit; resize: vertical; min-height: 60px; outline: none; line-height: 1.5; font-size: 0.95rem; }
+        
+        /* Responsive */
+        @media (max-width: 1024px) { .hero { text-align: center; justify-content: center; } .hero-visual { display: none; } }
+        @media (max-width: 768px) { 
+            .sidebar { position: fixed; left: 0; top: 0; height: 100vh; transform: translateX(-100%); z-index: 20000; box-shadow: 20px 0 50px rgba(0,0,0,0.5); } 
+            .sidebar.active { transform: translateX(0); } 
+            .sticky-header { padding: 0 1.5rem; } 
+            .nav-center { display: none; } 
+            .hero h1 { font-size: 2.5rem; } 
+            .notif-panel { right: 20px; left: 20px; width: auto; max-width: 400px; margin: 0 auto; top: 80px; }
+            .ws-layout { flex-direction: column; }
+            .ws-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); flex-direction: row; overflow-x: auto; padding-bottom: 10px; flex-shrink: 0; }
+            .ws-tab { white-space: nowrap; }
+            
+            /* Responsive Modal Fixes */
+            .modal-container { max-height: 90vh; overflow-y: auto; }
+            .fs-modal-container { height: 90vh; }
+        }
+
+        /* =========================================
+           7. NEW / FIXED COMPONENTS & POLISH
+           ========================================= */
+
+        /* A) Memory Toggle (iOS Style) */
+        .memory-wrapper { display: flex; align-items: center; gap: 12px; }
+        .memory-label { font-size: 0.85rem; font-weight: 600; color: #fff; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 34px; border: 1px solid rgba(255,255,255,0.1); }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .switch input:checked + .slider { background-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); border-color: transparent; }
+        .switch input:checked + .slider:before { transform: translateX(20px); }
+
+        /* B) Voice Button */
+        .voice-btn { width: 45px; height: 45px; border-radius: 12px; background: rgba(255,255,255,0.05); color: #fff; font-size: 1.1rem; display: grid; place-items: center; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .voice-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+        .voice-btn.recording { background: #ff4b4b; box-shadow: 0 0 20px rgba(255, 75, 75, 0.5); animation: pulseRecord 1.5s infinite; border-color: transparent; }
+        @keyframes pulseRecord { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* C) Parallel Mode UI */
+        .parallel-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; margin-top: 10px; }
+        @media (max-width: 600px) { .parallel-container { grid-template-columns: 1fr; } }
+        .parallel-box { background: rgba(0,0,0,0.3); border-width: 1px; border-style: solid; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .parallel-header { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 20px; background: rgba(255,255,255,0.05); font-size: 0.75rem; font-weight: 700; width: fit-content; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* D) Workspace Tasks */
+        .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; transition: 0.2s; }
+        .task-item:hover { background: rgba(255,255,255,0.06); }
+        .task-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(255,255,255,0.3); cursor: pointer; display: grid; place-items: center; flex-shrink: 0; transition: 0.2s; }
+        .task-check:hover { border-color: var(--primary); }
+        .task-check.checked { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+        .task-check.checked i { display: block !important; }
+
+        /* E) Flashcards */
+        .flashcard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .flashcard { background-color: transparent; width: 100%; height: 180px; perspective: 1000px; cursor: pointer; }
+        .fc-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }
+        .flashcard.flipped .fc-inner { transform: rotateY(180deg); }
+        .fc-front, .fc-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 16px; padding: 20px; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.2); line-height: 1.5; }
+        .fc-front { background: rgba(30, 30, 40, 0.6); color: #fff; backdrop-filter: blur(10px); }
+        .fc-back { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; transform: rotateY(180deg); font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* F) Settings Modal Layout */
+        .settings-section-title { font-size: 0.9rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 15px; letter-spacing: 1px; }
+        .profile-edit-row { display: flex; gap: 20px; align-items: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .profile-pic-wrapper { position: relative; }
+        .profile-pic { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: grid; place-items: center; font-size: 2rem; font-weight: 700; color: white; box-shadow: 0 0 20px var(--primary-glow); }
+        .upload-btn { position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #000; font-size: 0.8rem; display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); transition: 0.2s; }
+        .upload-btn:hover { transform: scale(1.1); }
+        .profile-info-inputs { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 200px; }
+        .input-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+        .settings-input { width: 100%; padding: 12px 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; outline: none; font-size: 0.9rem; transition: 0.3s; }
+        .settings-input:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); }
+        .settings-input.locked { opacity: 0.7; cursor: not-allowed; }
+        .account-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .settings-btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .logout-btn { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
+        .logout-btn:hover { background: rgba(255,255,255,0.1); }
+        .delete-btn { background: rgba(255, 75, 75, 0.1); color: #ff6b6b; border: 1px solid rgba(255, 75, 75, 0.3); }
+        .delete-btn:hover { background: rgba(255, 75, 75, 0.2); box-shadow: 0 0 15px rgba(255, 75, 75, 0.2); }
+        .info-card-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 10px; transition: 0.2s; }
+        .info-card-row.clickable { cursor: pointer; }
+        .info-card-row.clickable:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+        .info-left { display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 0.95rem; }
+        .info-left i { color: var(--primary); width: 20px; text-align: center; }
+        .info-right { color: var(--text-muted); font-size: 0.85rem; }
+
+        /* G) Help Modal */
+        .modal-section { margin-bottom: 25px; }
+        .modal-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; color: #ddd; }
+        .modal-item span:first-child { font-weight: 600; color: #fff; }
+        .modal-item span:last-child { color: var(--text-muted); text-align: right; max-width: 60%; }
+
+        /* H) Auth Modal */
+        .auth-container { border: 1px solid rgba(150, 106, 210, 0.3); box-shadow: 0 0 50px rgba(150, 106, 210, 0.15); }
+        .heading { font-size: 2rem; font-weight: 900; text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .form { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+        .input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 14px 16px; border-radius: 12px; color: white; outline: none; font-size: 0.95rem; transition: 0.3s; }
+        .input::placeholder { color: rgba(255,255,255,0.3); }
+        .input:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(150, 106, 210, 0.1); }
+        .input.hidden { display: none; }
+        .forgot-password { font-size: 0.8rem; text-align: right; margin-top: -5px; }
+        .forgot-password a { color: var(--text-muted); } .forgot-password a:hover { color: #fff; }
+        .login-button { margin-top: 10px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.3s; border: none; box-shadow: 0 0 20px rgba(150, 106, 210, 0.3); }
+        .login-button:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(150, 106, 210, 0.5); }
+        .social-account-container { margin-top: 25px; text-align: center; }
+        .title { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px; position: relative; }
+        .title::before, .title::after { content: ""; position: absolute; top: 50%; width: 30%; height: 1px; background: rgba(255,255,255,0.1); }
+        .title::before { left: 0; } .title::after { right: 0; }
+        .social-accounts { display: flex; gap: 15px; justify-content: center; }
+        .social-button { width: 50px; height: 50px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .social-button:hover { background: rgba(255,255,255,0.1); border-color: #fff; transform: translateY(-3px); }
+        .auth-toggle { text-align: center; font-size: 0.9rem; color: var(--text-muted); }
+        .auth-toggle a { color: var(--primary); font-weight: 700; margin-left: 5px; }
+        .agreement { display: block; text-align: center; margin-top: 20px; font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+
+        /* I) Pricing Feature List */
+        .price-features { list-style: none; text-align: left; margin-bottom: 2rem; padding: 0 10px; }
+        .price-features li { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 0.95rem; color: #ddd; }
+        .price-features li i { color: var(--accent); font-size: 1rem; }
+        .price-features li.disabled { color: rgba(255,255,255,0.3); }
+        .price-features li.disabled i { color: rgba(255,255,255,0.2); }
+
+        /* Modal Body Scroll Lock */
+        body.modal-open { overflow: hidden; }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-text">CA.AI</div>
+            <button class="new-chat-btn" onclick="createNewChat()"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="history-container" id="historyList">
+            <div class="history-label">Memory Stream</div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="menu-item" onclick="openModal('projectModal'); renderProjects();"><i class="fas fa-folder"></i> Projects</div>
+            <div class="menu-item" onclick="openModal('workspaceModal')"><i class="fas fa-briefcase"></i> Workspace</div>
+            <div class="user-profile-wrapper">
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-item" onclick="openModal('settingsModal'); populateSettings();"><i class="fas fa-cog"></i> Settings</div>
+                    <div class="dropdown-item" onclick="openModal('helpModal')"><i class="fas fa-question-circle"></i> Help</div>
+                    <div class="dropdown-item logout" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</div>
+                </div>
+                <div class="user-profile" onclick="toggleUserDropdown(event)">
+                    <div class="avatar" id="userAvatar">GU</div>
+                    <div><div style="font-size: 0.9rem; font-weight: 600;" id="sidebarUsername">Guest User</div><div style="font-size: 0.75rem; color: var(--text-muted);" id="sidebarPlan">Free Plan</div></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <header class="sticky-header">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button onclick="toggleSidebar()" style="background:none; color:white; font-size:1.5rem; display:none;" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+                <div class="logo-title" onclick="goHome()">CA.AI</div>
+            </div>
+            <nav class="nav-center">
+                <a onclick="goHome()" class="nav-link active">Home</a>
+                <a onclick="goToFeatures()" class="nav-link">Features</a>
+                <a onclick="goToPricing()" class="nav-link">Pricing</a>
+                <a onclick="goToTeam()" class="nav-link">Team</a>
+            </nav>
+            <div style="display: flex; align-items: center;">
+                <div class="notif-bell" onclick="toggleNotifications()">
+                    <i class="fas fa-bell"></i><div class="notif-dot" id="notifDot"></div>
+                </div>
+                <button class="login-btn" onclick="openModal('authModal')" id="headerLoginBtn">Login</button>
+            </div>
+            <div class="notif-panel" id="notifPanel">
+                <div class="notif-header"><span class="notif-title">Notifications</span><span class="notif-read-btn" onclick="markAllRead()">Mark all as read</span></div>
+                <div class="notif-list" id="notifList"></div>
+            </div>
+        </header>
+
+        <div class="page-section" id="mainScroll">
+            <div class="landing-container" id="landingContainer">
+                <section class="hero">
+                    <div class="hero-content">
+                        <h1>Context Aware<br>Intelligence</h1>
+                        <p>Your next-gen AI assistant that remembers everything, adapts to you, and powers your work with Gemini and ChatGPT in parallel.</p>
+                        <div class="hero-btns"><button class="btn-primary" onclick="startChatting()">Start Chatting</button><button class="btn-glass" onclick="goToPricing()">Upgrade Plan</button></div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="robot-wrapper">
+                            <div class="head-group" id="headGroup">
+                                <div class="robo-head-box">
+                                    <div class="face front"><div class="eye-container"><div class="box-eye"><div class="box-pupil"></div></div><div class="box-eye"><div class="box-pupil"></div></div></div></div>
+                                    <div class="face back"></div><div class="face right"></div><div class="face left"></div><div class="face top"></div><div class="face bottom"></div>
+                                </div>
+                            </div>
+                            <div class="body-group"><div class="robo-neck"></div><div class="robo-torso"><div class="robo-shoulder left-shoulder"></div><div class="robo-shoulder right-shoulder"></div><div class="robo-arm left-arm"></div><div class="robo-arm right-arm"></div><div class="robo-core"></div></div></div>
+                        </div>
+                    </div>
+                </section>
+                <section class="features-section" id="featuresSection">
+                    <h2 class="section-title">Everything You Need</h2>
+                    <div class="features-grid">
+                        <div class="feature-card"><div class="feature-icon"><i class="fas fa-comments"></i></div><h3 class="feature-title">Smart Chat</h3><p class="feature-desc">Context-aware conversations that remember previous interactions.</p></div>
+                        <div class="feature-card"><div class="feature-icon"><i class="fas fa-brain"></i></div><h3 class="feature-title">Memory Mode</h3><p class="feature-desc">Long-term memory storage for personalized assistance.</p></div>
+                        <div class="feature-card"><div class="feature-icon"><i class="fas fa-exchange-alt"></i></div><h3 class="feature-title">Dual API</h3><p class="feature-desc">Switch seamlessly between Gemini 1.5 and GPT-4o.</p></div>
+                        <div class="feature-card"><div class="feature-icon"><i class="fas fa-columns"></i></div><h3 class="feature-title">Parallel Mode</h3><p class="feature-desc">Run both models side-by-side for comparison.</p></div>
+                        <div class="feature-card"><div class="feature-icon"><i class="fas fa-layer-group"></i></div><h3 class="feature-title">Flashcards</h3><p class="feature-desc">Auto-generate study aids from your notes.</p></div>
+                        <div class="feature-card"><div class="feature-icon"><i class="fas fa-book-open"></i></div><h3 class="feature-title">Study Tools</h3><p class="feature-desc">Summarizer, quiz generator, and explainer modes.</p></div>
+                    </div>
+                </section>
+                <section class="pricing-section" id="pricingSection">
+                    <h2 class="section-title">Choose Your Power</h2>
+                    <div class="pricing-grid">
+                        <div class="pricing-card basic"><div class="price-title">Basic</div><div class="price-amount">₹199<span>/mo</span></div><ul class="price-features"><li><i class="fas fa-check-circle"></i> Normal Mode Chat</li><li><i class="fas fa-check-circle"></i> 50 messages/day</li><li class="disabled"><i class="fas fa-times-circle"></i> No Memory Mode</li></ul><button class="price-btn" onclick="selectPlan('Basic Plan')">Choose Basic</button></div>
+                        <div class="pricing-card premium"><div class="price-title">Premium</div><div class="price-amount">₹499<span>/mo</span></div><ul class="price-features"><li><i class="fas fa-check-circle"></i> Unlimited Normal Mode</li><li><i class="fas fa-check-circle"></i> Memory Mode ON</li><li><i class="fas fa-check-circle"></i> Dual API Access</li></ul><button class="price-btn" onclick="selectPlan('Premium Plan')">Go Premium</button></div>
+                        <div class="pricing-card ultimate"><div class="price-title">Ultimate</div><div class="price-amount">₹999<span>/mo</span></div><ul class="price-features"><li><i class="fas fa-bolt"></i> Parallel Mode</li><li><i class="fas fa-bolt"></i> Full Workspace</li><li><i class="fas fa-bolt"></i> AI Automation</li></ul><button class="price-btn" onclick="selectPlan('Ultimate Plan')">Upgrade to Ultimate</button></div>
+                    </div>
+                </section>
+                <section class="team-section" id="teamSection">
+                    <h2 class="section-title">The Team</h2>
+                    <div class="team-grid">
+                        <div class="team-member"><div class="member-avatar">👨‍💻</div><div class="member-name">Harkirat Singh</div><div class="member-role">Tech Lead</div></div>
+                        <div class="team-member"><div class="member-avatar">👩‍🔬</div><div class="member-name">Dr. Priya</div><div class="member-role">AI Research</div></div>
+                        <div class="team-member"><div class="member-avatar">🎨</div><div class="member-name">Alex Chen</div><div class="member-role">Product Design</div></div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="chat-section" id="chatInterface">
+                <div class="cinematic-bg"></div>
+                <div class="chat-toolbar">
+                    <div style="display:flex; gap: 15px; flex-wrap:wrap;">
+                        <div class="custom-dropdown" id="modeDropdown">
+                            <div class="dropdown-selected" onclick="toggleDropdown('modeOptions')"><i class="fas fa-book"></i> <span id="currentModeText">Study Mode</span> <i class="fas fa-chevron-down"></i></div>
+                            <div class="dropdown-options" id="modeOptions">
+                                <div class="dropdown-option" onclick="setMode('Study', 'fas fa-book')"><i class="fas fa-book"></i> Study Mode</div>
+                                <div class="dropdown-option" onclick="setMode('Coding', 'fas fa-code')"><i class="fas fa-code"></i> Coding Mode</div>
+                                <div class="dropdown-option" onclick="setMode('Explain', 'fas fa-lightbulb')"><i class="fas fa-lightbulb"></i> Explain Mode</div>
+                                <div class="dropdown-option" onclick="setMode('Exam', 'fas fa-edit')"><i class="fas fa-edit"></i> Exam Mode</div>
+                                <div class="dropdown-option" onclick="setMode('Focus', 'fas fa-bolt')"><i class="fas fa-bolt"></i> Focus Mode</div>
+                            </div>
+                        </div>
+                        <div class="custom-dropdown" id="apiDropdown">
+                            <div class="dropdown-selected" onclick="toggleDropdown('apiOptions')"><i class="fas fa-robot"></i> <span id="currentApiText">ChatGPT</span> <i class="fas fa-chevron-down"></i></div>
+                            <div class="dropdown-options" id="apiOptions">
+                                <div class="dropdown-option" onclick="setApi('gpt', 'fas fa-robot', 'ChatGPT')"><i class="fas fa-robot"></i> ChatGPT</div>
+                                <div class="dropdown-option" onclick="setApi('gemini', 'fas fa-star', 'Gemini')"><i class="fas fa-star"></i> Gemini</div>
+                                <div class="dropdown-option" onclick="setApi('parallel', 'fas fa-columns', 'Parallel')"><i class="fas fa-columns"></i> Parallel (Both)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="memory-wrapper"><span class="memory-label">Memory</span><label class="switch"><input type="checkbox" checked id="memoryToggle"><span class="slider"></span></label></div>
+                </div>
+                <div class="chat-messages" id="messageContainer"></div>
+                <div class="chat-input-area">
+                    <div class="input-wrapper">
+                        <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()"><i class="fas fa-microphone"></i></button>
+                        <input type="text" class="chat-input" id="userInput" placeholder="Ask anything... (Enter to send)">
+                        <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="authModal">
+        <div class="modal-container auth-container">
+            <div class="modal-close" onclick="closeModal('authModal')">✕</div>
+            <div class="container login-theme">
+              <div class="heading" id="authTitle">Sign In</div>
+              <form action="" class="form" id="caai-signin-form" onsubmit="handleAuthSubmit(event)">
+                <input type="text" class="input hidden" id="authUsername" placeholder="Username">
+                <input required class="input" type="text" name="email" id="email" placeholder="E-mail or Username">
+                <input required class="input" type="password" name="password" id="password" placeholder="Password">
+                <input type="password" class="input hidden" id="authConfirmPass" placeholder="Confirm Password">
+                <span class="forgot-password"><a href="#">Forgot Password ?</a></span>
+                <input class="login-button" type="submit" id="authSubmitBtn" value="Sign In">
+              </form>
+              <div class="social-account-container">
+                <span class="title">Or Sign in with</span>
+                <div class="social-accounts">
+                  <button type="button" class="social-button google" aria-label="Sign in with Google"><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 488 512" fill="#fff"><path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/></svg></button>
+                  <button type="button" class="social-button apple" aria-label="Sign in with Apple"><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512" fill="#fff"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.7-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg></button>
+                  <button type="button" class="social-button twitter" aria-label="Sign in with Twitter"><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512" fill="#fff"><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/></svg></button>
+                </div>
+              </div>
+              <div class="auth-toggle" style="margin-top: 15px;">
+                  <span id="authToggleText">Don't have an account?</span> 
+                  <a href="#" onclick="toggleAuthMode()" id="authLink">Sign Up</a>
+              </div>
+              <span class="agreement"><a href="#">Learn user licence agreement</a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-container settings-container">
+            <div class="modal-close" onclick="closeModal('settingsModal')">✕</div>
+            <div class="modal-header">Settings</div>
+            <div class="settings-body">
+                <div id="accountSettingsSection" style="display:none;">
+                    <div class="settings-section-title">Account</div>
+                    <div class="profile-edit-row">
+                        <div class="profile-pic-wrapper"><div class="profile-pic" id="settingsProfilePic">GU</div><button class="upload-btn"><i class="fas fa-camera"></i></button></div>
+                        <div class="profile-info-inputs"><div class="input-group"><label>Username</label><input type="text" id="settingsUsername" class="settings-input" value="Guest User"></div><div class="input-group"><label>Email</label><input type="text" id="settingsEmail" class="settings-input locked" value="guest@ca.ai" readonly></div></div>
+                    </div>
+                    <div class="account-actions"><button class="settings-btn logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button><button class="settings-btn delete-btn" onclick="confirmDeleteAccount(this)"><i class="fas fa-trash"></i> Delete Account</button></div>
+                    <div class="settings-divider" style="border:0;height:1px;background:rgba(255,255,255,0.1);margin:25px 0;"></div>
+                </div>
+                <div class="settings-section-title">Information & Support</div>
+                <div class="info-grid">
+                    <div class="info-card-row"><div class="info-left"><i class="fas fa-code-branch"></i> Version</div><div class="info-right">v1.0.0 Beta</div></div>
+                    <div class="info-card-row clickable" onclick="openModal('helpModal')"><div class="info-left"><i class="fas fa-book"></i> Quick Guide</div><div class="info-right"><i class="fas fa-chevron-right"></i></div></div>
+                    <div class="info-card-row clickable" onclick="window.location.href='mailto:support@ca.ai'"><div class="info-left"><i class="fas fa-bug"></i> Report Bug</div><div class="info-right"><i class="fas fa-chevron-right"></i></div></div>
+                    <div class="info-card-row clickable" onclick="closeModal('settingsModal'); goToTeam();"><div class="info-left"><i class="fas fa-users"></i> Contact Team</div><div class="info-right"><i class="fas fa-chevron-right"></i></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="helpModal">
+        <div class="modal-container">
+            <div class="modal-close" onclick="closeModal('helpModal')">✕</div>
+            <div class="modal-header">Help & Support</div>
+            <div class="modal-section"><div class="settings-section-title">How It Works</div><div class="modal-item"><span>Modes</span> <span>Select a mode to optimize AI behavior.</span></div><div class="modal-item"><span>Parallel</span> <span>Compare answers from two AIs side-by-side.</span></div><div class="modal-item"><span>Memory</span> <span>Enable to let AI remember past context.</span></div></div>
+            <div class="modal-section"><div class="settings-section-title">Support</div><div class="modal-item"><span>Contact Us</span> <a href="#" style="color:var(--primary);">support@ca.ai</a></div><div class="modal-item"><span>FAQ</span> <a href="#" style="color:var(--primary);">Read Docs</a></div></div>
+        </div>
+    </div>
+
+    <div class="modal" id="projectModal">
+        <div class="modal-container fs-modal-container">
+            <div class="modal-close" onclick="closeModal('projectModal')">✕</div>
+            <div class="modal-header">Projects</div>
+            <div class="fs-modal-body">
+                <button class="add-project-btn" onclick="createNewProject()"><i class="fas fa-plus"></i> Add New Project</button>
+                <div class="project-grid" id="projectGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="workspaceModal">
+        <div class="modal-container fs-modal-container">
+            <div class="modal-close" onclick="closeModal('workspaceModal')">✕</div>
+            <div class="modal-header">Workspace</div>
+            <div class="ws-layout">
+                <div class="ws-sidebar">
+                    <div class="ws-tab active" onclick="switchWsTab('notes', this)"><i class="fas fa-sticky-note"></i> Notes</div>
+                    <div class="ws-tab" onclick="switchWsTab('tasks', this)"><i class="fas fa-tasks"></i> Tasks</div>
+                    <div class="ws-tab" onclick="switchWsTab('saved', this)"><i class="fas fa-bookmark"></i> Saved</div>
+                    <div class="ws-tab" onclick="switchWsTab('flashcards', this)"><i class="fas fa-layer-group"></i> Flashcards</div>
+                </div>
+                <div class="ws-content" id="wsContent">
+                    <div id="ws-notes" class="ws-section active"><button class="add-project-btn" onclick="addNote()">+ New Note</button><div id="notesContainer" style="margin-top:15px;"></div></div>
+                    <div id="ws-tasks" class="ws-section"><button class="add-project-btn" onclick="addTask()">+ Add Task</button><div id="tasksContainer" style="margin-top:15px;"></div></div>
+                    <div id="ws-saved" class="ws-section"><div id="savedContainer" style="color:#aaa; text-align:center;">No saved responses yet.</div></div>
+                    <div id="ws-flashcards" class="ws-section"><button class="add-project-btn" onclick="generateFlashcards()">Generate from Notes</button><div class="flashcard-grid" id="fcContainer" style="margin-top:15px;"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="caai-tts-audio" style="display:none;"></audio>
+
+    <script>
+        // ================= GLOBAL STATE & BACKEND CONFIG =================
+        const USE_BACKEND = false; 
+        const API_BASE = '/api';   
+        const LOCAL_KEYS = { PROJECTS: '__caai_projects', WORKSPACE: '__caai_workspace', USERS: '__caai_users', TOKEN: '__caai_token' };
+
+        let chats = [], currentChatId = null, isRecording = false;
+        let users = [], currentUser = null, isSignupMode = false;
+        let selectedMode = 'Study', selectedApi = 'gpt';
+        let deleteConfirmStep = 0;
+        let lastFocusedElement = null; // Accessibility
+        
+        let notifications = [
+            { id: 1, title: 'Welcome', desc: 'Welcome to CA.AI context intelligence.', time: 'Just now', unread: true, icon: 'fas fa-star' },
+            { id: 2, title: 'Update', desc: 'Parallel Mode is now faster.', time: '2h ago', unread: true, icon: 'fas fa-bolt' }
+        ];
+        
+        let projects = [ { id: 101, title: 'Thesis Research', desc: 'AI ethics study notes', progress: 45 } ];
+        let workspace = { notes: [{id:1, text: "Remember to check the API docs."}], tasks: [{id:1, text: "Finish UI", done: false}], saved: [], flashcards: [] };
+
+        window.CA_ANIM = { speed: 1.25, reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches };
+        window.CA_HOOKS = { onMessageRendering: ()=>{}, onVoicePlayStart: ()=>{}, onVoicePlayEnd: ()=>{} };
+
+        // ================= INITIALIZATION =================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLocalState();
+            if(window.innerWidth <= 768) document.getElementById('mobileMenuBtn').style.display = 'block';
+            initRobotTracking(); createNewChat('Welcome Session'); updateNotifDot();
+            
+            // User Input Key Listener
+            document.getElementById('userInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+            });
+
+            // Click Outside Listeners
+            window.addEventListener('click', (e) => {
+                if (!e.target.closest('.custom-dropdown')) { document.querySelectorAll('.dropdown-options').forEach(el => el.style.display = 'none'); document.querySelectorAll('.custom-dropdown').forEach(el => el.classList.remove('active')); }
+                const profile = document.querySelector('.user-profile'); const dropdown = document.getElementById('userDropdown');
+                if (dropdown && !profile.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
+                const bell = document.querySelector('.notif-bell'); const panel = document.getElementById('notifPanel');
+                if (panel && !bell.contains(e.target) && !panel.contains(e.target)) panel.style.display = 'none';
+            });
+        });
+
+        // ================= DATA PERSISTENCE & API WRAPPER =================
+        function loadLocalState() {
+            try {
+                if(localStorage.getItem(LOCAL_KEYS.PROJECTS)) projects = JSON.parse(localStorage.getItem(LOCAL_KEYS.PROJECTS));
+                if(localStorage.getItem(LOCAL_KEYS.WORKSPACE)) workspace = JSON.parse(localStorage.getItem(LOCAL_KEYS.WORKSPACE));
+                if(localStorage.getItem(LOCAL_KEYS.USERS)) users = JSON.parse(localStorage.getItem(LOCAL_KEYS.USERS));
+            } catch(e) { console.warn("Load State Error", e); }
+        }
+        function saveLocalState() {
+            localStorage.setItem(LOCAL_KEYS.PROJECTS, JSON.stringify(projects));
+            localStorage.setItem(LOCAL_KEYS.WORKSPACE, JSON.stringify(workspace));
+            localStorage.setItem(LOCAL_KEYS.USERS, JSON.stringify(users));
+        }
+
+        async function apiRequest(path, method = 'GET', body = null) {
+            if (!USE_BACKEND) throw new Error("Backend disabled");
+            const token = localStorage.getItem(LOCAL_KEYS.TOKEN);
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            try {
+                const res = await fetch(`${API_BASE}${path}`, { method, headers, body: body ? JSON.stringify(body) : null });
+                if (!res.ok) throw new Error(`API Error ${res.status}`);
+                return await res.json();
+            } catch (err) { console.error("API Request failed, using fallback.", err); throw err; }
+        }
+
+        // ================= NAVIGATION & ROBOT =================
+        function initRobotTracking() {
+            const head = document.getElementById('headGroup'); const pupils = document.querySelectorAll('.box-pupil');
+            if (!head || !pupils.length) return;
+            let rafId = null; let last = { x: 0, y: 0 };
+
+            function onPointerMove(e) {
+                const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] && e.touches[0].clientX) || last.x;
+                const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] && e.touches[0].clientY) || last.y;
+                last.x = clientX; last.y = clientY;
+                if (rafId) return;
+                rafId = requestAnimationFrame(() => {
+                    rafId = null;
+                    if (window.innerWidth < 1024) { head.style.transform = ''; pupils.forEach(p => p.style.transform = ''); return; }
+                    const rect = head.getBoundingClientRect(); const cx = rect.left + rect.width / 2; const cy = rect.top + rect.height / 2;
+                    const rotY = (clientX - cx) / 28; const rotX = -(clientY - cy) / 28;
+                    head.style.transform = `rotateY(${rotY}deg) rotateX(${rotX}deg)`;
+                    const px = Math.max(-12, Math.min(12, (clientX - cx) / 40)); const py = Math.max(-10, Math.min(10, (clientY - cy) / 40));
+                    pupils.forEach(p => { p.style.transform = `translate3d(${px}px, ${py}px, 0)`; });
+                });
+            }
+            window.addEventListener('pointermove', onPointerMove, { passive: true });
+        }
+
+        function startChatting() { document.getElementById('landingContainer').style.display = 'none'; document.getElementById('chatInterface').classList.add('active'); document.getElementById('mainScroll').scrollTop = 0; document.getElementById('userInput').focus(); }
+        function goHome() { document.getElementById('chatInterface').classList.remove('active'); document.getElementById('landingContainer').style.display = 'block'; document.getElementById('mainScroll').scrollTop = 0; }
+        function goToFeatures() { goHome(); setTimeout(() => document.getElementById('featuresSection').scrollIntoView({ behavior: 'smooth' }), 100); }
+        function goToPricing() { goHome(); setTimeout(() => document.getElementById('pricingSection').scrollIntoView({ behavior: 'smooth' }), 100); }
+        function goToTeam() { goHome(); setTimeout(() => document.getElementById('teamSection').scrollIntoView({ behavior: 'smooth' }), 100); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+
+        // ================= NOTIFICATIONS =================
+        function toggleNotifications() {
+            const panel = document.getElementById('notifPanel');
+            if (panel.style.display === 'flex') { panel.style.display = 'none'; } 
+            else { panel.style.display = 'flex'; renderNotifications(); }
+        }
+        function renderNotifications() {
+            const list = document.getElementById('notifList'); list.innerHTML = '';
+            notifications.forEach(n => {
+                const item = document.createElement('div'); item.className = `notif-item ${n.unread ? 'unread' : ''}`;
+                item.innerHTML = `<div class="notif-icon"><i class="${n.icon}"></i></div><div class="notif-content"><h4>${n.title}</h4><p>${n.desc}</p><span class="notif-time">${n.time}</span></div>`;
+                list.appendChild(item);
+            });
+        }
+        function markAllRead() { notifications.forEach(n => n.unread = false); updateNotifDot(); renderNotifications(); }
+        function updateNotifDot() { const hasUnread = notifications.some(n => n.unread); document.getElementById('notifDot').classList.toggle('active', hasUnread); }
+
+        // ================= PROJECTS =================
+        async function renderProjects() {
+            if (USE_BACKEND) { try { const remote = await apiRequest('/projects'); if(Array.isArray(remote)) projects = remote; } catch(e){} }
+            const grid = document.getElementById('projectGrid'); grid.innerHTML = '';
+            projects.forEach(p => {
+                const card = document.createElement('div'); card.className = 'project-card';
+                card.innerHTML = `<div class="pj-title">${p.title}</div><div class="pj-desc">${p.desc}</div><div class="pj-progress"><div class="pj-bar" style="width:${p.progress}%"></div></div><div class="pj-actions"><button class="pj-btn" onclick="openModal('workspaceModal')">Open</button><button class="pj-btn del" onclick="deleteProject(${p.id})">Delete</button></div>`;
+                grid.appendChild(card);
+            });
+            setTimeout(() => { document.querySelectorAll('.pj-bar').forEach(b => { let w = b.style.width; b.style.width='0'; requestAnimationFrame(() => b.style.width=w); }); }, 100);
+        }
+        async function createNewProject() {
+            const title = prompt("Project Title:"); if (!title) return;
+            const newProj = { id: Date.now(), title, desc: "New Project Description", progress: 0 };
+            try { if (USE_BACKEND) await apiRequest('/projects', 'POST', newProj); projects.push(newProj); saveLocalState(); renderProjects(); } catch(e) { console.warn("Proj create failed", e); }
+        }
+        function deleteProject(id) { if (confirm("Delete Project?")) { projects = projects.filter(p => p.id !== id); saveLocalState(); renderProjects(); } }
+
+        // ================= WORKSPACE =================
+        function switchWsTab(tab, el) {
+            document.querySelectorAll('.ws-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.ws-section').forEach(s => s.classList.remove('active'));
+            el.classList.add('active'); document.getElementById('ws-' + tab).classList.add('active');
+            if (tab === 'notes') renderNotes(); if (tab === 'tasks') renderTasks(); if (tab === 'saved') renderSaved(); if (tab === 'flashcards') renderFlashcards();
+        }
+        async function addNote() { const n = { id: Date.now(), text: "" }; if (USE_BACKEND) try { await apiRequest('/workspace/notes', 'POST', n); } catch(e){} workspace.notes.push(n); saveLocalState(); renderNotes(); }
+        function renderNotes() {
+            const c = document.getElementById('notesContainer'); c.innerHTML = '';
+            workspace.notes.forEach(n => {
+                const d = document.createElement('div'); d.className = 'note-card';
+                const ta = document.createElement('textarea'); ta.value = n.text; ta.dataset.id = n.id;
+                ta.addEventListener('input', (e) => { const note = workspace.notes.find(x => x.id == e.target.dataset.id); if(note) { note.text = e.target.value; saveLocalState(); } });
+                d.appendChild(ta); c.appendChild(d);
+            });
+        }
+        async function addTask() { const t = prompt("New Task:"); if(t) { const newTask = {id:Date.now(), text:t, done:false}; if(USE_BACKEND) try { await apiRequest('/workspace/tasks', 'POST', newTask); } catch(e){} workspace.tasks.push(newTask); saveLocalState(); renderTasks(); } }
+        function renderTasks() {
+            const c = document.getElementById('tasksContainer'); c.innerHTML = '';
+            workspace.tasks.forEach(t => {
+                const d = document.createElement('div'); d.className = 'task-item';
+                d.innerHTML = `<div class="task-check ${t.done?'checked':''}" onclick="toggleTask(${t.id})"><i class="fas fa-check" style="color:white; font-size:10px; display:${t.done?'block':'none'}"></i></div><span>${t.text}</span>`;
+                c.appendChild(d);
+            });
+        }
+        async function toggleTask(id) { const t = workspace.tasks.find(x=>x.id===id); if(t) { t.done = !t.done; if(USE_BACKEND) try { await apiRequest(`/workspace/tasks/${id}`, 'PUT', t); } catch(e){} saveLocalState(); renderTasks(); } }
+        async function saveMessageToWorkspace(id) {
+            const chat = chats.find(c => c.id === currentChatId); if(!chat) return;
+            const msg = chat.messages.find(m => m.id === id); 
+            if (msg) { if(USE_BACKEND) try { await apiRequest('/workspace/saved', 'POST', msg); } catch(e){} workspace.saved.push(msg); saveLocalState(); alert("Saved to Workspace!"); }
+        }
+        function renderSaved() { const c = document.getElementById('savedContainer'); if(workspace.saved.length===0) { c.innerHTML = "No saved responses."; return; } c.innerHTML = workspace.saved.map(s => `<div class="note-card">${typeof s.content === 'object' ? 'Parallel Response' : s.content}</div>`).join(''); }
+        function generateFlashcards() { workspace.flashcards = [{q: "What is CA.AI?", a: "Context Aware Intelligence"}, {q: "What is Parallel Mode?", a: "Simultaneous Gemini + GPT responses"}]; renderFlashcards(); }
+        function renderFlashcards() { const c = document.getElementById('fcContainer'); c.innerHTML = ''; workspace.flashcards.forEach(f => { const d = document.createElement('div'); d.className = 'flashcard'; d.onclick = function() { this.classList.toggle('flipped'); }; d.innerHTML = `<div class="fc-inner"><div class="fc-front">${f.q}</div><div class="fc-back">${f.a}</div></div>`; c.appendChild(d); }); }
+
+        // ================= MODALS & ACCESSIBILITY =================
+        function openModal(id) { 
+            lastFocusedElement = document.activeElement;
+            const modal = document.getElementById(id);
+            if(modal) {
+                modal.style.display = 'flex'; 
+                document.body.classList.add('modal-open');
+                modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true');
+                const closeBtn = modal.querySelector('.modal-close');
+                if(closeBtn) setTimeout(() => closeBtn.focus(), 50);
+            }
+        }
+        function closeModal(id) { 
+            const modal = document.getElementById(id);
+            if(modal) {
+                modal.style.display = 'none'; 
+                document.body.classList.remove('modal-open');
+                if(lastFocusedElement) lastFocusedElement.focus();
+            }
+        }
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape') {
+                const openModals = document.querySelectorAll('.modal[style*="flex"]');
+                if(openModals.length > 0) closeModal(openModals[openModals.length - 1].id);
+            }
+        });
+
+        // ================= AUTH =================
+        function populateSettings() { if (currentUser) { document.getElementById('accountSettingsSection').style.display = 'block'; document.getElementById('settingsUsername').value = currentUser.username; document.getElementById('settingsEmail').value = currentUser.email; document.getElementById('settingsProfilePic').textContent = currentUser.username.charAt(0).toUpperCase(); } else { document.getElementById('accountSettingsSection').style.display = 'none'; } }
+        function confirmDeleteAccount(btn) { if (deleteConfirmStep === 0) { btn.textContent = "Confirm Delete?"; btn.style.background = "rgba(255, 0, 0, 0.3)"; deleteConfirmStep = 1; } else { logoutUser(); closeModal('settingsModal'); alert("Account Deleted."); btn.textContent = "Delete Account"; btn.style.background = ""; deleteConfirmStep = 0; } }
+        function toggleAuthMode() { isSignupMode = !isSignupMode; const title = document.getElementById('authTitle'); const btn = document.getElementById('authSubmitBtn'); const toggleText = document.getElementById('authToggleText'); const link = document.getElementById('authLink'); const uInput = document.getElementById('authUsername'); const cPass = document.getElementById('authConfirmPass'); if (isSignupMode) { title.textContent = 'Create Account'; btn.textContent = 'Sign Up'; toggleText.textContent = 'Already have an account?'; link.textContent = 'Sign In'; uInput.classList.remove('hidden'); cPass.classList.remove('hidden'); uInput.required = true; cPass.required = true; } else { title.textContent = 'Sign In'; btn.textContent = 'Sign In'; toggleText.textContent = "Don't have an account?"; link.textContent = 'Sign Up'; uInput.classList.add('hidden'); cPass.classList.add('hidden'); uInput.required = false; cPass.required = false; } }
+        
+        async function handleAuthSubmit(e) { 
+            e.preventDefault(); 
+            // Resilient selectors
+            const emailInput = document.getElementById('email') || document.getElementById('authEmail');
+            const passInput  = document.getElementById('password') || document.getElementById('authPassword');
+            const emailOrUser = emailInput ? emailInput.value.trim() : '';
+            const password = passInput ? passInput.value : '';
+            const userEl = document.getElementById('authUsername');
+            
+            const payload = { email: emailOrUser, password, username: userEl ? userEl.value : 'User' };
+
+            try {
+                if (USE_BACKEND) {
+                    const endpoint = isSignupMode ? '/auth/signup' : '/auth/login';
+                    const data = await apiRequest(endpoint, 'POST', payload);
+                    localStorage.setItem(LOCAL_KEYS.TOKEN, data.token);
+                    loginUser(data.user);
+                } else {
+                    // Local Fallback
+                    if (isSignupMode) {
+                        const confirmPass = document.getElementById('authConfirmPass').value;
+                        if (password !== confirmPass) { alert("Passwords do not match!"); return; }
+                        const newUser = { username: payload.username, email: emailOrUser, password, plan: 'Free Plan' };
+                        users.push(newUser); loginUser(newUser);
+                    } else {
+                        const user = users.find(u => (u.email === emailOrUser || u.username === emailOrUser) && u.password === password);
+                        if (user) loginUser(user);
+                        else { if(users.length === 0) alert("Demo Mode: No users found. Sign Up first."); else alert("Invalid Credentials!"); }
+                    }
+                }
+                saveLocalState();
+            } catch (err) { console.error("Auth failed", err); alert("Authentication failed."); }
+        }
+
+        function loginUser(user) { currentUser = user; document.getElementById('sidebarUsername').textContent = user.username; document.getElementById('sidebarPlan').textContent = user.plan; document.getElementById('userAvatar').textContent = user.username.charAt(0).toUpperCase(); document.getElementById('headerLoginBtn').style.display = 'none'; closeModal('authModal'); alert(`Welcome back, ${user.username}!`); }
+        function logoutUser() { currentUser = null; document.getElementById('sidebarUsername').textContent = "Guest User"; document.getElementById('sidebarPlan').textContent = "Free Plan"; document.getElementById('userAvatar').textContent = "GU"; document.getElementById('headerLoginBtn').style.display = 'block'; document.getElementById('userDropdown').style.display = 'none'; closeModal('settingsModal'); }
+        function toggleUserDropdown(e) { e.stopPropagation(); const d = document.getElementById('userDropdown'); d.style.display = d.style.display === 'flex' ? 'none' : 'flex'; }
+        function selectPlan(planName) { if (!currentUser) { alert("Please Login to upgrade your plan!"); openModal('authModal'); return; } currentUser.plan = planName; document.getElementById('sidebarPlan').textContent = planName; alert(`Switched to ${planName}.`); }
+
+        // ================= CHAT ENGINE & CINEMATIC =================
+        function toggleDropdown(id) { const el = document.getElementById(id); if(!el) return; const parent = el.parentElement; const isVisible = el.style.display === 'flex'; document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none'); document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('active')); if (!isVisible) { el.style.display = 'flex'; parent.classList.add('active'); } }
+        function setMode(mode, icon) { selectedMode = mode; document.querySelector('#modeDropdown .dropdown-selected').innerHTML = `<i class="${icon}"></i> <span>${mode} Mode</span> <i class="fas fa-chevron-down"></i>`; }
+        function setApi(api, icon, lbl) { selectedApi = api; document.querySelector('#apiDropdown .dropdown-selected').innerHTML = `<i class="${icon}"></i> <span>${lbl}</span> <i class="fas fa-chevron-down"></i>`; }
+        function createNewChat(title = 'New Conversation') { const newChat = { id: Date.now(), title: title, messages: [] }; chats.unshift(newChat); loadChat(newChat.id); if(window.innerWidth <= 768) toggleSidebar(); }
+        
+        function loadChat(id) { 
+            currentChatId = id; const chat = chats.find(c => c.id === id); 
+            const container = document.getElementById('messageContainer'); container.innerHTML = ''; 
+            if (!chat) { console.warn("Chat not found"); return; }
+            if (chat.messages.length === 0) addMessageToUI('ai', '🤖 Hello! I am CA.AI. Ready to help.', null); 
+            else chat.messages.forEach(msg => { if (msg.role === 'ai-parallel') addParallelUI(msg.content.gemini, msg.content.gpt); else addMessageToUI(msg.role, msg.content, msg.id); }); 
+            renderSidebarHistory(); startChatting(); 
+        }
+        
+        function sendMessage(textOverride) {
+            const input = document.getElementById('userInput'); const text = textOverride || input.value.trim(); if (!text) return;
+            const msgId = Date.now();
+            addMessageToUI('user', text, msgId); saveMessage('user', text, msgId); input.value = ''; 
+            const loadingId = addLoadingIndicator();
+            setTimeout(() => {
+                removeLoadingIndicator(loadingId);
+                const aiId = Date.now() + 1;
+                const metadata = { voiceUrl: null, ttsText: null, typingDuration: 2000 };
+                if (selectedApi === 'parallel') { 
+                    const r1 = generateMockResponse('gemini', selectedMode, text); const r2 = generateMockResponse('gpt', selectedMode, text); 
+                    addParallelUI(r1, r2); saveMessage('ai-parallel', { gemini: r1, gpt: r2 }, aiId); 
+                } else { 
+                    const r = generateMockResponse(selectedApi, selectedMode, text); 
+                    metadata.ttsText = r.replace(/<[^>]*>/g, ''); // Simple strip tags for TTS
+                    addMessageToUI('ai', r, aiId, metadata); 
+                    saveMessage('ai', r, aiId); 
+                }
+                const chat = chats.find(c => c.id === currentChatId); if (chat.title === 'New Conversation' || chat.title === 'Welcome Session') { chat.title = text.substring(0, 20) + '...'; renderSidebarHistory(); }
+            }, 1200 * window.CA_ANIM.speed);
+        }
+
+        function generateMockResponse(api, mode, query) { const responses = [`Analysis of "${query}" in **${mode}** mode suggests optimization.`, `Here is a ${mode} breakdown for: ${query}`, `Context retrieved for "${query}".`]; const prefix = api === 'gemini' ? '✨ <strong>Gemini 1.5:</strong>' : '🤖 <strong>GPT-4o:</strong>'; return `${prefix}<br>${responses[Math.floor(Math.random() * responses.length)]}`; }
+        function saveMessage(role, content, id) { const chat = chats.find(c => c.id === currentChatId); if (chat) chat.messages.push({ role, content, id }); }
+        
+        function addMessageToUI(role, content, id, metadata) {
+            const c = document.getElementById('messageContainer'); 
+            const row = document.createElement('div'); row.className = `message-row ${role}`;
+            
+            // Render Structure
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble ${role}`;
+            
+            if (role === 'user') {
+                bubble.textContent = content; // XSS Prevention
+            } else {
+                // For AI, we support Cinematic Reveal if not reduced motion
+                if (window.CA_ANIM.reducedMotion) {
+                    bubble.innerHTML = content;
+                } else {
+                    // Typewriter Effect
+                    revealText(bubble, content, metadata);
+                }
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'msg-wrapper';
+            wrapper.onmouseenter = () => wrapper.querySelector('.msg-actions').style.display='flex';
+            wrapper.onmouseleave = () => wrapper.querySelector('.msg-actions').style.display='none';
+            
+            const actions = document.createElement('div');
+            actions.className = 'msg-actions';
+            actions.innerHTML = `
+                <button class="action-btn" title="Copy" onclick="copyMessage(${id})"><i class="fas fa-copy"></i></button>
+                <button class="action-btn" title="Delete" onclick="deleteMessage(${id})"><i class="fas fa-trash"></i></button>
+                ${role === 'ai' ? `<button class="action-btn" title="Regenerate" onclick="regenerateMessage(${id})"><i class="fas fa-sync"></i></button>` : ''}
+                <button class="action-btn" title="Save" onclick="saveMessageToWorkspace(${id})"><i class="fas fa-bookmark"></i></button>
+            `;
+            
+            wrapper.appendChild(actions);
+            wrapper.appendChild(bubble);
+            row.appendChild(wrapper);
+            c.appendChild(row); 
+            scrollToBottom();
+        }
+
+        async function revealText(element, htmlContent, metadata) {
+            element.classList.add('typewriter-cursor');
+            element.innerHTML = '';
+            let i = 0; const len = htmlContent.length; const speed = 15 * window.CA_ANIM.speed;
+            
+            return new Promise(resolve => {
+                function type() {
+                    if (i < len) {
+                        if (htmlContent[i] === '<') {
+                            const closeIdx = htmlContent.indexOf('>', i);
+                            if (closeIdx !== -1) { element.innerHTML += htmlContent.substring(i, closeIdx + 1); i = closeIdx + 1; setTimeout(type, speed); return; }
+                        }
+                        element.innerHTML += htmlContent.charAt(i); i++; setTimeout(type, speed);
+                    } else {
+                        element.classList.remove('typewriter-cursor');
+                        resolve();
+                        if(metadata && (metadata.voiceUrl || metadata.ttsText)) playVoice(metadata.voiceUrl, metadata.ttsText);
+                    }
+                }
+                type();
+            });
+        }
+
+        function playVoice(url, text) {
+            const btn = document.getElementById('voiceBtn');
+            btn.classList.add('recording'); // Pulse effect
+            const onEnd = () => btn.classList.remove('recording');
+            
+            if(url) {
+                const audio = document.getElementById('caai-tts-audio');
+                audio.src = url; audio.play().then(() => { audio.onended = onEnd; }).catch(() => speakTTS(text, onEnd));
+            } else if (text) {
+                speakTTS(text, onEnd);
+            }
+        }
+
+        function speakTTS(text, onEnd) {
+            if (!window.speechSynthesis) { onEnd(); return; }
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.rate = 0.9; utter.pitch = 1.0;
+            utter.onend = onEnd;
+            window.speechSynthesis.speak(utter);
+        }
+
+        function addParallelUI(g, gp) { 
+            const c = document.getElementById('messageContainer'); const row = document.createElement('div'); row.className = 'message-row ai'; row.style.width='100%'; 
+            row.innerHTML = `<div class="parallel-container"><div class="parallel-box" style="border-color:#966AD2"><div class="parallel-header" style="color:#966AD2"><i class="fas fa-star"></i> Gemini</div><div>${g}</div></div><div class="parallel-box" style="border-color:#10a37f"><div class="parallel-header" style="color:#10a37f"><i class="fas fa-robot"></i> ChatGPT</div><div>${gp}</div></div></div>`; c.appendChild(row); scrollToBottom(); 
+        }
+        function addLoadingIndicator() { const id = 'load-'+Date.now(); const c = document.getElementById('messageContainer'); const row = document.createElement('div'); row.className = 'message-row ai'; row.id=id; row.innerHTML = `<div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`; c.appendChild(row); scrollToBottom(); return id; }
+        function removeLoadingIndicator(id) { const el = document.getElementById(id); if(el) el.remove(); }
+        function scrollToBottom() { const c = document.getElementById('messageContainer'); c.scrollTop = c.scrollHeight; }
+        function renderSidebarHistory() { 
+            const list = document.getElementById('historyList'); list.innerHTML = '<div class="history-label">Memory Stream</div>'; 
+            chats.forEach(chat => { 
+                const item = document.createElement('div'); item.className = `history-item ${chat.id===currentChatId?'active':''}`; 
+                item.addEventListener('click', () => loadChat(chat.id));
+                item.innerHTML=`<i class="fas fa-comment-alt"></i> <span>${chat.title}</span>`; list.appendChild(item); 
+            }); 
+        }
+        function toggleVoice() { isRecording = !isRecording; const btn = document.getElementById('voiceBtn'); const inp = document.getElementById('userInput'); if(isRecording) { btn.classList.add('recording'); inp.placeholder="Listening..."; } else { btn.classList.remove('recording'); inp.placeholder="Ask anything..."; inp.value+=" [Voice]"; inp.focus(); } }
+
+        function copyMessage(id) { alert("Message copied to clipboard!"); }
+        function deleteMessage(id) { const chat = chats.find(c => c.id === currentChatId); if(chat) { chat.messages = chat.messages.filter(m => m.id !== id); loadChat(currentChatId); } }
+        function regenerateMessage(id) { alert("Regenerating..."); sendMessage("Regenerate last response"); }
+    </script>
+</body>
+</html>
